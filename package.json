@@ -1,0 +1,22 @@
+{
+  "name": "wa-commuter",
+  "version": "1.0.0",
+  "description": "This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.6.1.",
+  "main": "build/index",
+  "scripts": {
+    "start": "npm run build:live",
+    "build:live": "nodemon --exec ./node_modules/.bin/ts-node -- ./server/index.ts"
+  },
+  "author": "",
+  "types": "build/index",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^8.5.1",
+    "@types/node-fetch": "^1.6.7",
+    "cheerio": "^1.0.0-rc.2",
+    "node-fetch": "^1.7.3",
+    "nodemon": "^1.13.3",
+    "ts-node": "^4.0.2",
+    "typescript": "^2.6.2"
+  }
+}
