@@ -15,6 +15,8 @@ interface ITimetable {
     [index: string]: Station
 }
 const timetables: Timetable = {};
+const meta: Object = {};
+const lines: Array<string> = [];
 const TimeSortingFunc = (a: string, b: string)=>{
     const aSplit = a.split(":");
     const aHour = Number(aSplit[0])
@@ -35,29 +37,32 @@ const TimeSortingFunc = (a: string, b: string)=>{
 }
 const Parse = (type: string, stationPrefix: string) => (body: any) => {
     const html = cheerio.load(body);
-    const data = html('body > center > center > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr').text();
-    const rows = data.split("\n").filter((row)=> row.trim() != "").map((row)=>row.trim());
+    const scheduledata = html('body > center > center > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > table > tbody > tr:nth-child(3) > td > table > tbody > tr:nth-child(n):nth-child(-n+2)').children();
+    const linedata = html('body > center > center > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > table > tbody > tr:nth-child(3) > td > table > tbody > tr:nth-child(3)').text();
+    const data = html('body > center > center > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > table > tbody > tr:nth-child(3) > td > table > tbody > tr:nth-child(n+4)').text();
+    const rows = data.split("\n").map((row)=>row.trim());
+    const metarows = scheduledata.map((_, m)=> {
+        const t = html(m).text().trim();
+        if (t != ""){
+            const [Japanese, English] = t.split("\n").map((line)=>line.trim());
+            const bgcolor = html(m).attr('bgcolor');
+            const color = html(m).children().first().attr('color');
+            return {Japanese, English, Diffrentiators: {bgcolor, color}};
+        }
+    })
+    console.log(metarows.toArray())
+    
+    lines = linedata.split("\n").filter((row)=> row.trim() != "").map((row)=>row.trim());
     let pastMeta: boolean = false;
     let currentStation: string;
-    for(let i= 0; i < rows.length; i++){
+    
+
+    for(let i = 0; i < rows.length; i++){
         const currentRow = rows[i];
-        
-        if(pastMeta) {
-            if(currentRow.indexOf(":") !== -1){
-                timetables[currentStation][type].push(currentRow);
-            } else {
-                if(currentRow.indexOf(stationPrefix) === 0 && currentRow.length <= 3){
-                    currentStation = rows[i+1].replace(/\s+/g, "");
-                    timetables[currentStation] = !!timetables[currentStation] ? timetables[currentStation] : {};
-                    timetables[currentStation][type] = !!timetables[currentStation][type] ? timetables[currentStation][type] : [];
-                    timetables[currentStation].Abbrevation = rows[i];
-                    timetables[currentStation].English = rows[i+2];
-                    i+=2;
-                }
-            }
+        if(currentRow.indexOf(":") !== -1){
+            timetables[currentStation][type].push(currentRow);
         } else {
             if(currentRow.indexOf(stationPrefix) === 0 && currentRow.length <= 3){
-                pastMeta = true;
                 currentStation = rows[i+1].replace(/\s+/g, "");
                 timetables[currentStation] = !!timetables[currentStation] ? timetables[currentStation] : {};
                 timetables[currentStation][type] = !!timetables[currentStation][type] ? timetables[currentStation][type] : [];
@@ -73,7 +78,6 @@ const Parse = (type: string, stationPrefix: string) => (body: any) => {
         if (timetables[key][type] !== undefined){
             timetables[key][type].sort(TimeSortingFunc)
         }        
-        
     }
 };
 fetch("http://www.kotoden.co.jp/publichtm/kotoden/time/jikoku_new/01k_down.htm")
@@ -81,14 +85,14 @@ fetch("http://www.kotoden.co.jp/publichtm/kotoden/time/jikoku_new/01k_down.htm")
         return res.text();
     })
     .then(Parse("Outgoing","K"))
-    .then(()=>{
-        return fetch("http://www.kotoden.co.jp/publichtm/kotoden/time/jikoku_new/02n_down.htm")
+    // .then(()=>{
+    //     return fetch("http://www.kotoden.co.jp/publichtm/kotoden/time/jikoku_new/02n_down.htm")
 
-    })
-    .then((res: any) => {
-        return res.text();
-    })
-    .then(Parse("Incoming","N"))
-    .then(()=>{
-    })
+    // })
+    // .then((res: any) => {
+    //     return res.text();
+    // })
+    // .then(Parse("Incoming","N"))
+    // .then(()=>{
+    // })
 
